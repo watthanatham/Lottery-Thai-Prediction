@@ -1,0 +1,92 @@
+{% extends "analysis/base.html" %}
+{% block title %}{{ action }} การออกรางวัล{% endblock %}
+{% block page_title %}{{ action }} ผลการออกรางวัล{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl">
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    <div class="card p-6">
+      <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        ข้อมูลการออกรางวัล
+      </h2>
+
+      <!-- Draw Date -->
+      <div class="mb-4">
+        <label class="block text-slate-300 text-sm font-medium mb-1">วันที่ออกรางวัล *</label>
+        {{ form.draw_date }}
+        {% if form.draw_date.errors %}
+        <p class="text-red-400 text-xs mt-1">{{ form.draw_date.errors.0 }}</p>
+        {% endif %}
+        <p class="text-slate-500 text-xs mt-1">หวยออกวันที่ 1 และ 16 ของทุกเดือน</p>
+      </div>
+
+      <!-- First Prize -->
+      <div>
+        <label class="block text-slate-300 text-sm font-medium mb-1">รางวัลที่ 1 (6 ตัว) *</label>
+        {{ form.first_prize }}
+        {% if form.first_prize.errors %}
+        <p class="text-red-400 text-xs mt-1">{{ form.first_prize.errors.0 }}</p>
+        {% endif %}
+        <p class="text-slate-500 text-xs mt-1">เลขรางวัลที่ 1 จำนวน 6 ตัว เลขท้าย 2 ตัวและเลขหน้า/หลัง 3 ตัวจะนำมาจากตัวเลขนี้</p>
+      </div>
+    </div>
+
+    <div class="card p-6">
+      <h2 class="font-semibold text-white mb-4">รางวัลอื่นๆ (เลือก - จะคำนวณอัตโนมัติหากไม่กรอก)</h2>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-slate-300 text-sm mb-1">เลขท้าย 2 ตัว</label>
+          {{ form.two_back }}
+        </div>
+        <div>
+          <label class="block text-slate-300 text-sm mb-1">ใกล้เคียงรางวัลที่ 1 (ล่าง)</label>
+          {{ form.near_first_1 }}
+        </div>
+        <div>
+          <label class="block text-slate-300 text-sm mb-1">ใกล้เคียงรางวัลที่ 1 (บน)</label>
+          {{ form.near_first_2 }}
+        </div>
+        <div>
+          <label class="block text-slate-300 text-sm mb-1">เลขหน้า 3 ตัว (ชุดที่ 1)</label>
+          {{ form.three_front_1 }}
+        </div>
+        <div>
+          <label class="block text-slate-300 text-sm mb-1">เลขหน้า 3 ตัว (ชุดที่ 2)</label>
+          {{ form.three_front_2 }}
+        </div>
+        <div>
+          <label class="block text-slate-300 text-sm mb-1">เลขหลัง 3 ตัว (ชุดที่ 1)</label>
+          {{ form.three_back_1 }}
+        </div>
+        <div>
+          <label class="block text-slate-300 text-sm mb-1">เลขหลัง 3 ตัว (ชุดที่ 2)</label>
+          {{ form.three_back_2 }}
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-slate-300 text-sm mb-1">หมายเหตุ</label>
+        {{ form.notes }}
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="bg-red-900/40 border border-red-700 rounded-lg p-4 text-red-300 text-sm">
+      {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        บันทึก
+      </button>
+      <a href="{% url 'draw_list' %}" class="btn-secondary">ยกเลิก</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

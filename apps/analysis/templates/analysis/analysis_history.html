@@ -1,0 +1,64 @@
+{% extends "analysis/base.html" %}
+{% block title %}ประวัติการวิเคราะห์{% endblock %}
+{% block page_title %}ประวัติการวิเคราะห์{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-5">
+  <p class="text-slate-400 text-sm">{{ sessions.count }} การวิเคราะห์</p>
+  <a href="{% url 'analysis_run' %}" class="btn-primary">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    วิเคราะห์ใหม่
+  </a>
+</div>
+
+{% if sessions %}
+<div class="space-y-3">
+  {% for session in sessions %}
+  <div class="card p-4 hover:border-slate-600 transition-colors">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="flex items-start gap-3">
+        <!-- Type badge -->
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold
+          {% if session.lottery_type == '2D' %}bg-indigo-900 text-indigo-300
+          {% elif session.lottery_type == '3F' %}bg-purple-900 text-purple-300
+          {% else %}bg-teal-900 text-teal-300{% endif %}">
+          {{ session.lottery_type }}
+        </div>
+        <div>
+          <p class="text-white font-medium text-sm">{{ session.get_lottery_type_display }}</p>
+          <p class="text-slate-400 text-xs">
+            ผู้อ้างอิง: {{ session.reference_draw.draw_date }}
+            {% if session.target_draw_date %}→ ทายนาย {{ session.target_draw_date }}{% endif %}
+          </p>
+          <p class="text-slate-500 text-xs mt-0.5">{{ session.formulas_run }} สูตร · {{ session.history_limit }} ครั้ง · {{ session.created_at|date:"d M Y H:i" }}</p>
+        </div>
+      </div>
+
+      <!-- Prediction chips -->
+      <div class="flex-1 min-w-0">
+        <div class="flex gap-2 flex-wrap">
+          <span class="text-slate-500 text-xs self-center">A:</span>
+          {% for item in session.option_a_results %}
+          <span class="px-2 py-0.5 bg-indigo-900/50 border border-indigo-800 text-indigo-200 font-mono text-xs rounded">{{ item.0 }}</span>
+          {% endfor %}
+          <span class="text-slate-500 text-xs self-center ml-2">B:</span>
+          {% for item in session.option_b_results %}
+          <span class="px-2 py-0.5 bg-purple-900/50 border border-purple-800 text-purple-200 font-mono text-xs rounded">{{ item.0 }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-2 flex-shrink-0">
+        <a href="{% url 'analysis_detail' session.pk %}" class="btn-secondary py-1 px-3 text-xs">ดู</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card p-12 text-center">
+  <p class="text-slate-500 mb-4">ยังไม่มีการวิเคราะห์ข้อมูล</p>
+  <a href="{% url 'analysis_run' %}" class="btn-primary">วิเคราะห์ครั้งแรก</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "analysis/base.html" %}
+{% block title %}แดชบอร์{% endblock %}
+{% block page_title %}แดชบอร์{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="card p-4">
+    <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">จำนวนการออกรางวัล</p>
+    <p class="text-3xl font-bold text-white mt-1">{{ total_draws }}</p>
+    <p class="text-slate-500 text-xs mt-1">การออกรางวัลที่ือแหน่</p>
+  </div>
+  <div class="card p-4">
+    <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">การวิเคราะห์</p>
+    <p class="text-3xl font-bold text-white mt-1">{{ total_sessions }}</p>
+    <p class="text-slate-500 text-xs mt-1">การทำนายการทดลอง</p>
+  </div>
+  <div class="card p-4">
+    <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">ตรวจสอบ</p>
+    <p class="text-3xl font-bold text-white mt-1">{{ verified }}</p>
+    <p class="text-slate-500 text-xs mt-1">การทดลองที่ตรวจสอบ</p>
+  </div>
+  <div class="card p-4">
+    <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">ความแค่ใจ</p>
+    <p class="text-3xl font-bold mt-1
+              {% if accuracy >= 60 %}text-green-400{% elif accuracy >= 30 %}text-amber-400{% else %}text-slate-400{% endif %}">
+      {% if verified %}{{ accuracy }}%{% else %}—{% endif %}
+    </p>
+    <p class="text-slate-500 text-xs mt-1">{{ correct }} / {{ verified }} ถูกต้อง</p>
+  </div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6">
+  <!-- การออกรางวัลล่าสุด -->
+  <div class="card overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+      <h2 class="font-semibold text-white text-sm">การออกรางวัลล่าสุด</h2>
+      <a href="{% url 'draw_list' %}" class="text-indigo-400 hover:text-indigo-300 text-xs">ดูทั้งหมด →</a>
+    </div>
+    {% if draws %}
+    <div class="divide-y divide-slate-700">
+      {% for draw in draws %}
+      <div class="flex items-center gap-4 px-5 py-3 hover:bg-slate-700/30 transition-colors">
+        <div class="flex-shrink-0 text-center">
+          <p class="text-white font-semibold text-sm">{{ draw.draw_date|date:"d M" }}</p>
+          <p class="text-slate-500 text-xs">{{ draw.draw_date|date:"Y" }}</p>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-gold font-bold text-lg tracking-widest">{{ draw.first_prize }}</p>
+          <div class="flex gap-3 mt-0.5">
+            <span class="text-slate-400 text-xs">2D: <span class="text-slate-200">{{ draw.two_back }}</span></span>
+            <span class="text-slate-400 text-xs">3F: <span class="text-slate-200">{{ draw.three_front_1|default:"—" }}</span></span>
+            <span class="text-slate-400 text-xs">3B: <span class="text-slate-200">{{ draw.three_back_1|default:"—" }}</span></span>
+          </div>
+        </div>
+        <a href="{% url 'draw_edit' draw.pk %}"
+           class="text-slate-500 hover:text-slate-300 transition-colors text-xs">Edit</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="px-5 py-10 text-center">
+      <p class="text-slate-500 mb-3">ยังไม่มีการออกรางวัลที่ง่ายไว</p>
+      <a href="{% url 'draw_add' %}" class="btn-primary">เพิ่มการออกรางวัลครั้งแรก</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- การวิเคราะห์ล่าสุด -->
+  <div class="card overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+      <h2 class="font-semibold text-white text-sm">การวิเคราะห์ล่าสุด</h2>
+      <a href="{% url 'analysis_history' %}" class="text-indigo-400 hover:text-indigo-300 text-xs">ดูทั้งหมด →</a>
+    </div>
+    {% if recent_sessions %}
+    <div class="divide-y divide-slate-700">
+      {% for session in recent_sessions %}
+      <div class="px-5 py-3 hover:bg-slate-700/30 transition-colors">
+        <div class="flex items-start justify-between">
+          <div>
+            <span class="badge
+              {% if session.lottery_type == '2D' %}bg-indigo-900 text-indigo-300
+              {% elif session.lottery_type == '3F' %}bg-purple-900 text-purple-300
+              {% else %}bg-teal-900 text-teal-300{% endif %}">
+              {{ session.get_lottery_type_display|truncatechars:10 }}
+            </span>
+            <p class="text-slate-400 text-xs mt-1">Based on {{ session.reference_draw.draw_date }}</p>
+            <p class="text-slate-500 text-xs">{{ session.formulas_run }} formulas · {{ session.created_at|date:"d M Y H:i" }}</p>
+          </div>
+          <a href="{% url 'analysis_detail' session.pk %}" class="btn-secondary text-xs py-1 px-2">View</a>
+        </div>
+        <!-- Option A numbers -->
+        <div class="mt-2 flex gap-2 flex-wrap">
+          {% for item in session.option_a_results %}
+          <span class="px-2 py-0.5 bg-indigo-900/50 border border-indigo-700 text-indigo-200 text-xs rounded font-mono">
+            {{ item.0 }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="px-5 py-10 text-center">
+      <p class="text-slate-500 mb-3">No analyses yet.</p>
+      <a href="{% url 'analysis_run' %}" class="btn-primary">Run First Analysis</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="mt-6 flex gap-3 flex-wrap">
+  <a href="{% url 'draw_add' %}" class="btn-primary">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    Add Draw Result
+  </a>
+  <a href="{% url 'analysis_run' %}" class="btn-secondary">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    Run Analysis (75 Formulas)
+  </a>
+  <a href="{% url 'checklist' %}" class="btn-secondary">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    Verify Predictions
+  </a>
+</div>
+{% endblock %}

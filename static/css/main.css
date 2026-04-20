@@ -1,0 +1,175 @@
+/* Main Stylesheet */
+
+[x-cloak] {
+  display: none !important;
+}
+
+/* Input Fields - Enhanced Visibility */
+.input-field {
+  width: 100%;
+  background-color: #1e293b !important;
+  border: 2px solid #475569 !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  border-radius: 8px;
+  padding: 12px 16px !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.5px;
+  line-height: 1.5 !important;
+  outline: none !important;
+  transition: all 0.2s ease;
+}
+
+/* Date Input - Different styling */
+input[type="date"].input-field {
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  padding: 10px 14px !important;
+}
+
+.input-field::placeholder {
+  color: #cbd5e1 !important;
+  font-weight: 400;
+  opacity: 1 !important;
+}
+
+.input-field:hover {
+  border-color: #64748b !important;
+  background-color: #334155 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.input-field:focus {
+  background-color: #1e293b !important;
+  border-color: #818cf8 !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+}
+
+.input-field:active {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+/* Date Input Calendar Picker */
+input[type="date"].input-field::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 4px;
+  margin-right: 4px;
+  padding: 4px 8px;
+  opacity: 0.7;
+  filter: invert(1) brightness(0.8);
+  transition: opacity 0.2s ease;
+}
+
+input[type="date"].input-field::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Select Fields */
+select.input-field {
+  @apply appearance-none cursor-pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 14l-7 7m0 0l-7-7m7 7V3'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+/* Buttons */
+.btn-primary {
+  @apply inline-flex items-center gap-2 
+    bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700
+    text-white font-medium 
+    px-4 py-2 rounded-lg 
+    transition-colors duration-200 
+    text-sm shadow-sm hover:shadow-md;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center gap-2 
+    bg-slate-700 hover:bg-slate-600 active:bg-slate-800
+    text-slate-200 font-medium 
+    px-4 py-2 rounded-lg 
+    transition-colors duration-200 
+    text-sm border border-slate-600;
+}
+
+.btn-danger {
+  @apply inline-flex items-center gap-2 
+    bg-red-900 hover:bg-red-800 active:bg-red-700
+    text-red-200 font-medium 
+    px-4 py-2 rounded-lg 
+    transition-colors duration-200 
+    text-sm;
+}
+
+/* Card Component */
+.card {
+  @apply bg-slate-800 border border-slate-700 rounded-xl shadow-sm;
+}
+
+.card:hover {
+  @apply border-slate-600;
+}
+
+/* Badge Component */
+.badge {
+  @apply inline-block px-3 py-1 rounded-full text-xs font-semibold;
+}
+
+/* Number Chip */
+.number-chip {
+  @apply inline-flex items-center justify-center 
+    w-14 h-14 rounded-full text-xl font-bold 
+    border-2 bg-slate-900;
+}
+
+/* HTMX Indicators */
+.htmx-indicator {
+  opacity: 0;
+  transition: opacity 200ms;
+}
+
+.htmx-request .htmx-indicator {
+  opacity: 1;
+}
+
+.htmx-request.htmx-indicator {
+  opacity: 1;
+}
+
+/* Sidebar Sticky Fix */
+.sidebar-wrapper {
+  height: 100vh;
+  position: relative;
+}
+
+/* Better Text Rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Table Styles */
+table {
+  @apply w-full text-sm;
+}
+
+table thead {
+  @apply bg-slate-700/50;
+}
+
+table th {
+  @apply px-5 py-3 text-left text-xs text-slate-400 uppercase tracking-wider font-semibold;
+}
+
+table td {
+  @apply px-5 py-3;
+}
+
+table tbody tr {
+  @apply border-b border-slate-700/50 hover:bg-slate-700/20 transition-colors duration-150;
+}

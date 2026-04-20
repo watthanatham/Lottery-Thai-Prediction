@@ -1,0 +1,264 @@
+{% extends "analysis/base.html" %}
+{% block title %}Analysis #{{ session.pk }}{% endblock %}
+{% block page_title %}ผลการวิเคราะห์ — เลือกเลขเล่น{% endblock %}
+
+{% block content %}
+<!-- Session Header -->
+<div class="card p-5 mb-6">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <span class="badge text-sm
+          {% if session.lottery_type == '2D' %}bg-indigo-900 text-indigo-200
+          {% elif session.lottery_type == '3F' %}bg-purple-900 text-purple-200
+          {% else %}bg-teal-900 text-teal-200{% endif %}">
+          {{ session.get_lottery_type_display }}
+        </span>
+        <span class="text-slate-400 text-sm">อ้างอิงจาก: <strong class="text-white">{{ session.reference_draw.draw_date|date:"d M Y" }}</strong></span>
+        {% if session.target_draw_date %}
+        <span class="text-slate-400 text-sm">→ คาดว่าจะออก: <strong class="text-gold">{{ session.target_draw_date|date:"d M Y" }}</strong></span>
+        {% endif %}
+      </div>
+      <p class="text-slate-500 text-xs mt-1">
+        {{ session.formulas_run }} สูตร · ย้อนหลัง {{ session.history_limit }} งวด · {{ session.created_at|date:"d M Y H:i" }}
+      </p>
+    </div>
+    <a href="{% url 'analysis_run' %}" class="btn-secondary text-xs">วิเคราะห์ใหม่</a>
+  </div>
+</div>
+
+<!-- Quick Guide -->
+<div class="card p-5 mb-6 bg-slate-800 border-l-4 border-gold">
+  <div class="flex gap-4">
+    <div class="text-2xl">💡</div>
+    <div>
+      <h3 class="font-semibold text-white mb-2">วิธีเลือกเลขเล่น</h3>
+      <p class="text-slate-300 text-sm mb-3">
+        เลือก <strong>Top 3-5 เลขแรก</strong> จากตัวเลือก A หรือ B ที่เหมือนกัน (เลขที่ปรากฏในทั้งสองตัวเลือก) จะมีความมั่นใจสูงสุด
+      </p>
+      <div class="flex gap-2">
+        <a href="https://github.com/anthropics/claude-code" class="text-indigo-400 text-xs hover:text-indigo-300 underline">📖 อ่านคู่มือเต็ม</a>
+        <span class="text-slate-500 text-xs">·</span>
+        <a href="{% url 'checklist' %}" class="text-indigo-400 text-xs hover:text-indigo-300 underline">✅ ตรวจสอบผล</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Results: Option A and B -->
+<div class="grid lg:grid-cols-2 gap-6 mb-6">
+
+  <!-- Option A -->
+  <div class="card overflow-hidden">
+    <div class="px-5 py-4 bg-indigo-900/20 border-b border-indigo-900">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">A</div>
+        <div>
+          <p class="font-semibold text-white">ตัวเลือก A — ความถี่สูงสุด</p>
+          <p class="text-indigo-300 text-xs">นับจำนวนสูตรที่เลือกเลขเดียวกัน (สูตรยิ่งมาก = เลขน่าเชื่อถือมากขึ้น)</p>
+        </div>
+      </div>
+    </div>
+    <div class="p-5">
+      <div class="flex flex-wrap gap-3 justify-center mb-5">
+        {% for pred in predictions_a %}
+        <div class="text-center group">
+          <div class="number-chip border-indigo-600 text-white cursor-pointer hover:border-indigo-400 transition-colors">{{ pred.number }}</div>
+          <p class="text-indigo-400 text-xs mt-1">{{ pred.frequency_count }} สูตร</p>
+          <p class="text-slate-500 text-xs">อันดับ #{{ pred.rank }}</p>
+          {% if pred.is_verified %}
+          <span class="badge {% if pred.was_correct %}bg-green-900 text-green-300{% else %}bg-red-900 text-red-300{% endif %} mt-1 text-xs">
+            {% if pred.was_correct %}✓ ถูก{% else %}✗ ผิด{% endif %}
+          </span>
+          {% endif %}
+          <!-- Generate Button (hidden by default, shown on hover) -->
+          <a href="{% url 'generate_six_digits' session.pk pred.number 'A' %}" class="block mt-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            🎲 สร้าง 6 หลัก
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Intensity Bar Guide -->
+      <div class="px-3 py-2 mb-3 bg-slate-700/30 rounded text-slate-400 text-xs">
+        <p class="font-medium text-slate-300 mb-1">📊 ความมั่นใจ:</p>
+        <div class="flex gap-2 items-center">
+          <span class="text-xs">12+ สูตร</span>
+          <div class="flex-1 h-2 bg-slate-700 rounded">
+            <div class="h-2 bg-green-500 rounded" style="width: 100%"></div>
+          </div>
+          <span class="text-xs">สูงมาก ⭐</span>
+        </div>
+      </div>
+
+      <div class="divide-y divide-slate-700/50">
+        {% for pred in predictions_a %}
+        <div class="flex items-center justify-between py-2 hover:bg-slate-700/20 px-2 rounded transition-colors">
+          <div class="flex items-center gap-3">
+            <span class="text-slate-500 text-xs w-4">#{{ pred.rank }}</span>
+            <span class="font-mono text-white font-semibold text-lg">{{ pred.number }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-24 bg-slate-700 rounded-full h-1.5">
+              <div class="bg-indigo-500 h-1.5 rounded-full"
+                   style="width: {% widthratio pred.frequency_count session.formulas_run 100 %}%"></div>
+            </div>
+            <span class="text-slate-400 text-xs w-16 text-right">{{ pred.frequency_count }}/{{ session.formulas_run }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card overflow-hidden">
+    <div class="px-5 py-4 bg-purple-900/20 border-b border-purple-900">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">B</div>
+        <div>
+          <p class="font-semibold text-white">ตัวเลือก B — คะแนนอันดับ</p>
+          <p class="text-purple-300 text-xs">1️⃣=5 · 2️⃣=4 · 3️⃣=3 · 4️⃣=2 · 5️⃣=1 คะแนน/สูตร</p>
+        </div>
+      </div>
+    </div>
+    <div class="p-5">
+      <div class="flex flex-wrap gap-3 justify-center mb-5">
+        {% for pred in predictions_b %}
+        <div class="text-center group">
+          <div class="number-chip border-purple-600 text-white cursor-pointer hover:border-purple-400 transition-colors">{{ pred.number }}</div>
+          <p class="text-purple-400 text-xs mt-1">{{ pred.ranking_score|floatformat:0 }} คะแนน</p>
+          <p class="text-slate-500 text-xs">อันดับ #{{ pred.rank }}</p>
+          {% if pred.is_verified %}
+          <span class="badge {% if pred.was_correct %}bg-green-900 text-green-300{% else %}bg-red-900 text-red-300{% endif %} mt-1 text-xs">
+            {% if pred.was_correct %}✓ ถูก{% else %}✗ ผิด{% endif %}
+          </span>
+          {% endif %}
+          <!-- Generate Button (hidden by default, shown on hover) -->
+          <a href="{% url 'generate_six_digits' session.pk pred.number 'B' %}" class="block mt-2 text-xs bg-purple-600 hover:bg-purple-500 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+            🎲 สร้าง 6 หลัก
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Score Guide -->
+      <div class="px-3 py-2 mb-3 bg-slate-700/30 rounded text-slate-400 text-xs">
+        <p class="font-medium text-slate-300 mb-1">📊 ช่วงคะแนน:</p>
+        <div class="grid grid-cols-3 gap-2 text-xs">
+          <div><span class="text-green-400">250+</span> = ดี ⭐</div>
+          <div><span class="text-yellow-400">150-249</span> = ปาน</div>
+          <div><span class="text-orange-400">&lt;150</span> = อ่อน</div>
+        </div>
+      </div>
+
+      <div class="divide-y divide-slate-700/50">
+        {% for pred in predictions_b %}
+        {% with max_score=predictions_b.0.ranking_score %}
+        <div class="flex items-center justify-between py-2 hover:bg-slate-700/20 px-2 rounded transition-colors">
+          <div class="flex items-center gap-3">
+            <span class="text-slate-500 text-xs w-4">#{{ pred.rank }}</span>
+            <span class="font-mono text-white font-semibold text-lg">{{ pred.number }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-24 bg-slate-700 rounded-full h-1.5">
+              <div class="bg-purple-500 h-1.5 rounded-full"
+                   style="width: {% widthratio pred.ranking_score max_score 100 %}%"></div>
+            </div>
+            <span class="text-slate-400 text-xs w-16 text-right">{{ pred.ranking_score|floatformat:0 }}</span>
+          </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Formula Breakdown -->
+<div class="card overflow-hidden" x-data="{ expanded: false }">
+  <div class="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+    <div>
+      <h2 class="font-semibold text-white">📋 แบ่งแยกสูตร (รายละเอียด)</h2>
+      <p class="text-slate-400 text-xs">ผลลัพธ์ Top-5 จากแต่ละสูตร ({{ formula_breakdown|length }} สูตร)</p>
+    </div>
+    <button @click="expanded = !expanded" class="btn-secondary text-xs py-1 px-3">
+      <span x-text="expanded ? 'ปิด' : 'เปิด'">เปิด</span>
+    </button>
+  </div>
+
+  <div x-show="expanded" x-cloak>
+    <!-- Group filters -->
+    <div x-data="{ activeGroup: 'All' }" class="p-4 border-b border-slate-700">
+      <div class="flex flex-wrap gap-2">
+        {% regroup formula_breakdown by group as grouped_formulas %}
+        <button @click="activeGroup = 'All'"
+                :class="activeGroup === 'All' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'"
+                class="px-3 py-1 rounded-full text-xs transition-colors">All</button>
+        {% for group in grouped_formulas %}
+        <button @click="activeGroup = '{{ group.grouper }}'"
+                :class="activeGroup === '{{ group.grouper }}' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'"
+                class="px-3 py-1 rounded-full text-xs transition-colors">{{ group.grouper }}</button>
+        {% endfor %}
+      </div>
+
+      <!-- Table -->
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="text-left text-slate-400 border-b border-slate-700">
+              <th class="pb-2 pr-4 font-medium">รหัส</th>
+              <th class="pb-2 pr-4 font-medium">ชื่อสูตร</th>
+              <th class="pb-2 pr-4 font-medium">หมวดหมู่</th>
+              <th class="pb-2 font-medium">Top-5 เลข</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700/30">
+            {% for row in formula_breakdown %}
+            <tr x-show="activeGroup === 'All' || activeGroup === '{{ row.group }}'"
+                class="hover:bg-slate-700/20">
+              <td class="py-2 pr-4 font-mono text-indigo-400 font-semibold">{{ row.code }}</td>
+              <td class="py-2 pr-4 text-slate-300">{{ row.name }}</td>
+              <td class="py-2 pr-4">
+                <span class="badge bg-slate-700 text-slate-300">{{ row.group }}</span>
+              </td>
+              <td class="py-2">
+                <div class="flex gap-1 flex-wrap">
+                  {% for num, score in row.top5 %}
+                  <span class="px-2 py-0.5 bg-slate-700 text-slate-200 rounded font-mono text-xs">{{ num }}</span>
+                  {% endfor %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div x-show="!expanded" class="px-5 py-4 text-slate-400 text-sm">
+    💡 คลิก "เปิด" เพื่อดูรายละเอียดว่าแต่ละสูตรออกเลขอะไร (ใช้เมื่อต้องการเข้าใจลึกขึ้น)
+  </div>
+</div>
+
+<!-- Next Steps -->
+<div class="card p-5 mt-6 bg-slate-800/50 border-l-4 border-indigo-500">
+  <h3 class="font-semibold text-white mb-3">🎯 ขั้นตอนต่อไป</h3>
+  <ol class="space-y-2 text-sm text-slate-300">
+    <li><strong>1.</strong> เลือก Top 3-5 เลขจากตัวเลือก A หรือ B</li>
+    <li><strong>2.</strong> ลองเล่นหวยกับเลขที่เลือก</li>
+    <li><strong>3.</strong> รอวันการออกรางวัล</li>
+    <li><strong>4.</strong> ไปหน้า "✅ ตรวจสอบ" เพื่อบันทึกผลลัพธ์</li>
+  </ol>
+</div>
+
+<div class="mt-6 flex gap-3 flex-wrap">
+  <a href="{% url 'checklist' %}" class="btn-primary">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    ตรวจสอบผลลัพธ์
+  </a>
+  <a href="{% url 'analysis_history' %}" class="btn-secondary">ประวัติการวิเคราะห์ทั้งหมด</a>
+  <a href="{% url 'analysis_run' %}" class="btn-secondary">วิเคราะห์ใหม่</a>
+</div>
+{% endblock %}
