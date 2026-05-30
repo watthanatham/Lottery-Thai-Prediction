@@ -1,12 +1,13 @@
 {% extends "analysis/base.html" %}
-{% block title %}Formula Settings{% endblock %}
-{% block page_title %}Formula Settings{% endblock %}
+{% block title %}ตั้งค่าสูตร{% endblock %}
+{% block page_title %}ตั้งค่าสูตร{% endblock %}
 
 {% block content %}
-<div class="mb-5 flex items-center justify-between">
-  <p class="text-slate-400 text-sm">
-    {{ active }} / {{ total }} formulas active.
-    Adjust weights (0 = disabled, 1 = normal, 2 = double importance).
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <p class="mb-0 text-secondary small">
+    {{ active }} / {{ total }} สูตรที่ใช้งาน ·
+    ปรับน้ำหนัก (0 = ปิด, 1 = ปกติ, 2 = สำคัญเป็นสองเท่า)
   </p>
 </div>
 
@@ -16,75 +17,94 @@
       hx-swap="innerHTML">
   {% csrf_token %}
 
-  {% for group_name, formulas in groups.items %}
-  <div class="card overflow-hidden mb-4" x-data="{ expanded: true }">
-    <button type="button"
-            @click="expanded = !expanded"
-            class="w-full flex items-center justify-between px-5 py-4 border-b border-slate-700 hover:bg-slate-700/30 transition-colors">
-      <div class="flex items-center gap-3">
-        <span class="font-semibold text-white">{{ group_name }}</span>
-        <span class="badge bg-slate-700 text-slate-300">{{ formulas|length }}</span>
-        <span class="text-slate-500 text-xs">formulas</span>
+  <!-- Bootstrap Accordion — one panel per formula group -->
+  <div class="accordion mb-4" id="formulaAccordion">
+    {% for group_name, formulas in groups.items %}
+
+    <div class="accordion-item card mb-3">
+      <h2 class="accordion-header">
+        <button class="accordion-button" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#group-{{ forloop.counter }}"
+                aria-expanded="true">
+          <span class="me-2">{{ group_name }}</span>
+          <span class="badge bg-secondary fw-normal" style="font-size:.7rem">
+            {{ formulas|length }} สูตร
+          </span>
+        </button>
+      </h2>
+
+      <div id="group-{{ forloop.counter }}"
+           class="accordion-collapse collapse show"
+           data-bs-parent="#formulaAccordion">
+        <div class="accordion-body">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:.8rem">
+              <thead>
+                <tr>
+                  <th>รหัส</th>
+                  <th>ชื่อสูตร</th>
+                  <th>รายละเอียด</th>
+                  <th style="width:6rem">น้ำหนัก</th>
+                  <th class="text-center" style="width:4rem">ใช้งาน</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for cfg in formulas %}
+                <tr {% if not cfg.is_active %}style="opacity:.5"{% endif %}>
+                  <td class="font-mono fw-semibold" style="color:#818cf8">{{ cfg.formula_code }}</td>
+                  <td class="text-white">{{ cfg.formula_name }}</td>
+                  <td class="text-secondary">{{ cfg.description|truncatechars:70 }}</td>
+                  <td>
+                    <input type="number"
+                           name="weight_{{ cfg.formula_code }}"
+                           value="{{ cfg.weight }}"
+                           min="0" max="10" step="0.1"
+                           class="weight-input">
+                  </td>
+                  <td class="text-center">
+                    <input type="checkbox"
+                           name="active_{{ cfg.formula_code }}"
+                           {% if cfg.is_active %}checked{% endif %}
+                           class="form-check-input"
+                           style="width:1.1rem;height:1.1rem;accent-color:var(--app-primary);cursor:pointer">
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <svg class="w-4 h-4 text-slate-400 transition-transform"
-           :class="expanded ? 'rotate-180' : ''"
-           fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-      </svg>
-    </button>
-
-    <div x-show="expanded">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="text-xs text-slate-400 uppercase border-b border-slate-700/50 text-left">
-            <th class="px-5 py-2 font-medium">Code</th>
-            <th class="px-5 py-2 font-medium">Formula Name</th>
-            <th class="px-5 py-2 font-medium">Description</th>
-            <th class="px-5 py-2 font-medium w-24">Weight</th>
-            <th class="px-5 py-2 font-medium w-16 text-center">Active</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-700/30">
-          {% for cfg in formulas %}
-          <tr class="hover:bg-slate-700/20 transition-colors {% if not cfg.is_active %}opacity-50{% endif %}">
-            <td class="px-5 py-2.5 font-mono text-indigo-400 font-semibold text-xs">{{ cfg.formula_code }}</td>
-            <td class="px-5 py-2.5 text-white text-xs">{{ cfg.formula_name }}</td>
-            <td class="px-5 py-2.5 text-slate-400 text-xs">{{ cfg.description|truncatechars:70 }}</td>
-            <td class="px-5 py-2.5">
-              <input type="number"
-                     name="weight_{{ cfg.formula_code }}"
-                     value="{{ cfg.weight }}"
-                     min="0" max="10" step="0.1"
-                     class="w-20 bg-slate-700 border border-slate-600 text-slate-100 rounded px-2 py-1 text-xs
-                            focus:outline-none focus:ring-1 focus:ring-indigo-500" />
-            </td>
-            <td class="px-5 py-2.5 text-center">
-              <input type="checkbox"
-                     name="active_{{ cfg.formula_code }}"
-                     {% if cfg.is_active %}checked{% endif %}
-                     class="w-4 h-4 accent-indigo-500 cursor-pointer" />
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
     </div>
-  </div>
-  {% endfor %}
 
-  <div class="flex items-center gap-4 mt-5">
-    <button type="submit" class="btn-primary">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-      Save Settings
+    {% endfor %}
+  </div><!-- /accordion -->
+
+  <!-- Save button -->
+  <div class="d-flex align-items-center gap-3 mt-2">
+    <button type="submit" class="btn btn-primary d-flex align-items-center gap-2">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      บันทึกการตั้งค่า
     </button>
-    <div id="save-feedback" class="text-sm"></div>
+    <div id="save-feedback" class="small text-secondary"></div>
   </div>
+
 </form>
 
-<div class="mt-4 card p-4">
-  <p class="text-slate-400 text-xs">
-    <strong class="text-white">Tip:</strong> Set weight to <code class="bg-slate-700 px-1 rounded">2.0</code> for formulas you trust more, or <code class="bg-slate-700 px-1 rounded">0.5</code> to reduce their influence. Set to <code class="bg-slate-700 px-1 rounded">0</code> or uncheck <em>Active</em> to skip a formula entirely.
-    Changes take effect on the next analysis run.
+<!-- Tip card -->
+<div class="card p-4 mt-4">
+  <p class="mb-0 text-secondary small">
+    <strong class="text-white">Tip:</strong>
+    ตั้งค่าน้ำหนักเป็น <code class="bg-secondary px-1 rounded">2.0</code>
+    สำหรับสูตรที่คุณเชื่อถือมากขึ้น หรือ
+    <code class="bg-secondary px-1 rounded">0.5</code>
+    เพื่อลดอิทธิพล ตั้งค่าเป็น <code class="bg-secondary px-1 rounded">0</code>
+    หรือปิดใช้งาน <em>Active</em> เพื่อข้ามสูตรนั้นทั้งหมด
+    การเปลี่ยนแปลงจะมีผลในการวิเคราะห์ครั้งถัดไป
   </p>
 </div>
+
 {% endblock %}

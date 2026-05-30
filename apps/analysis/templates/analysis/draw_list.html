@@ -3,72 +3,87 @@
 {% block page_title %}ผลการออกรางวัล{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-between mb-5">
-  <p class="text-slate-400 text-sm">สำลตรายการออกรางวัล {{ draws.count }} เทพาะ</p>
-  <a href="{% url 'draw_add' %}" class="btn-primary">
-    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <p class="mb-0 text-secondary small">ทั้งหมด {{ draws.count }} งวด</p>
+  <a href="{% url 'draw_add' %}" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
     เพิ่มการออกรางวัล
   </a>
 </div>
 
 {% if draws %}
+
 <div class="card overflow-hidden">
-  <table class="w-full text-sm">
-    <thead>
-      <tr class="border-b border-slate-700 text-left text-xs text-slate-400 uppercase tracking-wider">
-        <th class="px-5 py-3">วันที่</th>
-        <th class="px-5 py-3">รางวัลที่ 1</th>
-        <th class="px-5 py-3">เลข 2 ตัว</th>
-        <th class="px-5 py-3">เลขหน้า 3 ตัว</th>
-        <th class="px-5 py-3">เลขหลัง 3 ตัว</th>
-        <th class="px-5 py-3">ฦช 1 เคียง</th>
-        <th class="px-5 py-3 text-right">การจัดการ</th>
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-slate-700/50" id="draw-table">
-      {% for draw in draws %}
-      <tr class="hover:bg-slate-700/20 transition-colors" id="draw-row-{{ draw.pk }}">
-        <td class="px-5 py-3 font-medium text-white">{{ draw.draw_date|date:"d M Y" }}</td>
-        <td class="px-5 py-3 font-bold text-gold tracking-widest font-mono">{{ draw.first_prize }}</td>
-        <td class="px-5 py-3 font-mono text-slate-200">{{ draw.two_back|default:"—" }}</td>
-        <td class="px-5 py-3 font-mono text-slate-200">
-          {{ draw.three_front_1|default:"—" }}
-          {% if draw.three_front_2 %} / {{ draw.three_front_2 }}{% endif %}
-        </td>
-        <td class="px-5 py-3 font-mono text-slate-200">
-          {{ draw.three_back_1|default:"—" }}
-          {% if draw.three_back_2 %} / {{ draw.three_back_2 }}{% endif %}
-        </td>
-        <td class="px-5 py-3 font-mono text-slate-400 text-xs">
-          {{ draw.near_first_1|default:"—" }} / {{ draw.near_first_2|default:"—" }}
-        </td>
-        <td class="px-5 py-3 text-right">
-          <div class="flex items-center justify-end gap-2">
-            <a href="{% url 'draw_edit' draw.pk %}" class="btn-secondary py-1 px-2 text-xs">แก้ไข</a>
-            <button
-              hx-post="{% url 'draw_delete' draw.pk %}"
-              hx-target="#draw-row-{{ draw.pk }}"
-              hx-swap="outerHTML"
-              hx-confirm="ลบการออกรางวัล {{ draw.draw_date }}?"
-              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-              class="btn-danger py-1 px-2 text-xs">
-              ลบ
-            </button>
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% else %}
-<div class="card p-12 text-center">
-  <div class="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-    <svg class="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>วันที่</th>
+          <th>รางวัลที่ 1</th>
+          <th>เลข 2 ตัว</th>
+          <th>เลขหน้า 3 ตัว</th>
+          <th>เลขหลัง 3 ตัว</th>
+          <th>เลขเคียง</th>
+          <th class="text-end">การจัดการ</th>
+        </tr>
+      </thead>
+      <tbody id="draw-table">
+        {% for draw in draws %}
+        <tr id="draw-row-{{ draw.pk }}">
+          <td class="fw-semibold text-white">{{ draw.draw_date|date:"d M Y" }}</td>
+          <td class="font-mono fw-bold text-gold tracking-wider">{{ draw.first_prize }}</td>
+          <td class="font-mono text-white">{{ draw.two_back|default:"—" }}</td>
+          <td class="font-mono text-white">
+            {{ draw.three_front_1|default:"—" }}{% if draw.three_front_2 %} / {{ draw.three_front_2 }}{% endif %}
+          </td>
+          <td class="font-mono text-white">
+            {{ draw.three_back_1|default:"—" }}{% if draw.three_back_2 %} / {{ draw.three_back_2 }}{% endif %}
+          </td>
+          <td class="font-mono text-secondary small">
+            {{ draw.near_first_1|default:"—" }} / {{ draw.near_first_2|default:"—" }}
+          </td>
+          <td class="text-end">
+            <div class="d-flex align-items-center justify-content-end gap-2">
+              <a href="{% url 'draw_edit' draw.pk %}"
+                 class="btn btn-outline-secondary btn-sm">แก้ไข</a>
+              <button
+                hx-post="{% url 'draw_delete' draw.pk %}"
+                hx-target="#draw-row-{{ draw.pk }}"
+                hx-swap="outerHTML"
+                hx-confirm="ลบการออกรางวัล {{ draw.draw_date }}?"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                class="btn btn-danger btn-sm">
+                ลบ
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-  <h2 class="text-white font-semibold mb-2">ยังไม่มฅกศาล</h2>
-  <p class="text-slate-400 text-sm mb-5">เพิ่มผลการออกรางวัลผลกำนดเพื่อเขึ่นการดำเนินการวิเคราะห์คง๐๕ มี</p>
-  <a href="{% url 'draw_add' %}" class="btn-primary">เพิ่มการออกรางวัลครั้งแรก</a>
 </div>
+
+{% else %}
+
+<div class="card p-5 text-center">
+  <div class="d-flex align-items-center justify-content-center rounded-circle bg-secondary bg-opacity-25 mx-auto mb-4"
+       style="width:4rem;height:4rem">
+    <svg width="32" height="32" class="text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2
+               M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+    </svg>
+  </div>
+  <h2 class="text-white fw-semibold mb-2">ยังไม่มีข้อมูล</h2>
+  <p class="text-secondary mb-4">เพิ่มผลการออกรางวัลเพื่อเริ่มการวิเคราะห์</p>
+  <div>
+    <a href="{% url 'draw_add' %}" class="btn btn-primary">เพิ่มการออกรางวัลครั้งแรก</a>
+  </div>
+</div>
+
 {% endif %}
 {% endblock %}

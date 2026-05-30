@@ -14,25 +14,25 @@ class LotteryDrawForm(forms.ModelForm):
         ]
         widgets = {
             'draw_date': forms.DateInput(
-                attrs={'type': 'date', 'class': 'input-field'}, format='%Y-%m-%d'),
+                attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
             'first_prize': forms.TextInput(
-                attrs={'class': 'input-field', 'placeholder': '123456', 'maxlength': 6}),
+                attrs={'class': 'form-control', 'placeholder': '123456', 'maxlength': 6}),
             'near_first_1': forms.TextInput(
-                attrs={'class': 'input-field', 'placeholder': 'Auto', 'maxlength': 6}),
+                attrs={'class': 'form-control', 'placeholder': 'Auto', 'maxlength': 6}),
             'near_first_2': forms.TextInput(
-                attrs={'class': 'input-field', 'placeholder': 'Auto', 'maxlength': 6}),
+                attrs={'class': 'form-control', 'placeholder': 'Auto', 'maxlength': 6}),
             'three_front_1': forms.TextInput(
-                attrs={'class': 'input-field', 'placeholder': 'Auto', 'maxlength': 3}),
+                attrs={'class': 'form-control', 'placeholder': 'Auto', 'maxlength': 3}),
             'three_front_2': forms.TextInput(
-                attrs={'class': 'input-field', 'placeholder': '---', 'maxlength': 3}),
+                attrs={'class': 'form-control', 'placeholder': '---', 'maxlength': 3}),
             'three_back_1': forms.TextInput(
-                attrs={'class': 'input-field', 'placeholder': 'Auto', 'maxlength': 3}),
+                attrs={'class': 'form-control', 'placeholder': 'Auto', 'maxlength': 3}),
             'three_back_2': forms.TextInput(
-                attrs={'class': 'input-field', 'placeholder': '---', 'maxlength': 3}),
+                attrs={'class': 'form-control', 'placeholder': '---', 'maxlength': 3}),
             'two_back': forms.TextInput(
-                attrs={'class': 'input-field', 'placeholder': 'Auto', 'maxlength': 2}),
+                attrs={'class': 'form-control', 'placeholder': 'Auto', 'maxlength': 2}),
             'notes': forms.Textarea(
-                attrs={'class': 'input-field', 'rows': 2, 'placeholder': 'Optional notes…'}),
+                attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Optional notes…'}),
         }
 
     def clean_first_prize(self):
@@ -50,19 +50,19 @@ class AnalysisRunForm(forms.Form):
     ]
     lottery_type = forms.ChoiceField(
         choices=LOTTERY_TYPE_CHOICES,
-        widget=forms.RadioSelect(attrs={'class': 'radio-input'}),
+        widget=forms.RadioSelect(attrs={'class': 'btn-check'}),
         initial='2D',
         label='Lottery Type',
     )
     history_limit = forms.IntegerField(
         min_value=5, max_value=200, initial=50,
         label='Draws to include in analysis',
-        widget=forms.NumberInput(attrs={'class': 'input-field w-24'}),
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:6rem'}),
     )
     target_draw_date = forms.DateField(
         required=False,
         label='Target Draw Date (optional)',
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'input-field'}, format='%Y-%m-%d'),
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
     )
 
 

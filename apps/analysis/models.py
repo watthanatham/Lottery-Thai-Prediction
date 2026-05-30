@@ -127,6 +127,9 @@ class AnalysisSession(models.Model):
     # Option B top picks: [["45", 245.0], ...]  (number, ranking_score)
     option_b_results = models.JSONField(default=list)
 
+    # Option C top picks: [["45", 87.5], ...]  (number, weighted consensus score)
+    option_c_results = models.JSONField(default=list)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -143,10 +146,17 @@ class AnalysisSession(models.Model):
     def get_option_b_numbers(self):
         return [item[0] for item in self.option_b_results]
 
+    def get_option_c_numbers(self):
+        return [item[0] for item in self.option_c_results]
+
 
 class PredictionEntry(models.Model):
     """Individual predicted number tracked for a specific analysis session."""
-    OPTION_CHOICES = [('A', 'Option A — Frequency'), ('B', 'Option B — Ranking Score')]
+    OPTION_CHOICES = [
+        ('A', 'Option A — Frequency'),
+        ('B', 'Option B — Ranking Score'),
+        ('C', 'Option C — Enhanced Consensus'),
+    ]
 
     session = models.ForeignKey(
         AnalysisSession, on_delete=models.CASCADE,

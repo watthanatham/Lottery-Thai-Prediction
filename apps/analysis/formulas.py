@@ -409,8 +409,10 @@ class FormulaEngine:
         return self._rank(scores)
 
     def F27_overdue_prob(self) -> Result:
+        # P(appears at least once in `gap` draws) = 1 - (1-p)^gap, increases with gap
         p = 1.0 / (self.max_val + 1)
-        scores = {n: p * ((1 - p) ** self._current_gap(n)) * 1000 for n in self.all_nums}
+        scores = {n: (1 - (1 - p) ** max(self._current_gap(n), 1)) * 100
+                  for n in self.all_nums}
         return self._rank(scores)
 
     def F28_gap_percentile(self) -> Result:
@@ -944,7 +946,7 @@ class FormulaEngine:
     # AGGREGATION                                                         #
     # ================================================================== #
     @staticmethod
-    def aggregate_option_a(formula_results: Dict[str, Result], top_n: int = 5) -> list:
+    def aggregate_option_a(formula_results: Dict[str, Result], top_n: int = 10) -> list:
         """
         Option A — Highest Frequency.
         Count which numbers appear in the Top-5 of the most formulas.
@@ -957,7 +959,7 @@ class FormulaEngine:
         return counts.most_common(top_n)
 
     @staticmethod
-    def aggregate_option_b(formula_results: Dict[str, Result], top_n: int = 5) -> list:
+    def aggregate_option_b(formula_results: Dict[str, Result], top_n: int = 10) -> list:
         """
         Option B — Ranking Score.
         1st=5 pts, 2nd=4 pts, 3rd=3 pts, 4th=2 pts, 5th=1 pt per formula.
@@ -971,7 +973,7 @@ class FormulaEngine:
         return sorted(totals.items(), key=lambda x: -x[1])[:top_n]
 
     @staticmethod
-    def aggregate_option_c_enhanced(formula_results: Dict[str, Result], top_n: int = 5) -> list:
+    def aggregate_option_c_enhanced(formula_results: Dict[str, Result], top_n: int = 10) -> list:
         """
         Option C — Enhanced Consensus (NEW OPTIMIZED METHOD).
         Combines both frequency consensus AND weighted score for better accuracy.

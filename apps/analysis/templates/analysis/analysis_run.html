@@ -3,118 +3,144 @@
 {% block page_title %}วิเคราะห์ — 75 สูตร{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl" x-data="{ lottery_type: '2D' }">
+<div style="max-width:680px">
 
-  <div class="card p-6 mb-6">
-    <p class="text-slate-400 text-sm">
+  <!-- Info card -->
+  <div class="card p-4 mb-4">
+    <p class="mb-0 text-secondary small">
       เลือกประเภทหวยและช่วงการออกรางวัล จากนั้นกำหนดจำนวนย้อนหลัง
-      <strong class="text-white">N การออกรางวัล</strong> ที่ต้องการใช้ในการวิเคราะห์ โดยใช้สูตรทั้ง 75 รายการ
-      แล้วรวมผลลัพธ์จากตัวเลือกต่าง ๆ เช่น
-      <strong class="text-indigo-300">ตัวเลือก A</strong> (นับ Top 5 ตามความถี่) และ
-      <strong class="text-purple-300">ตัวเลือก B</strong> (จัดอันดับตามคะแนน/ความสำคัญ)
+      <strong class="text-white">N การออกรางวัล</strong> ที่ต้องการใช้ในการวิเคราะห์
+      โดยใช้สูตรทั้ง 75 รายการ แล้วรวมผลลัพธ์จากตัวเลือกต่าง ๆ เช่น
+      <strong class="text-primary">ตัวเลือก A</strong> (นับ Top 5 ตามความถี่) และ
+      <strong style="color:#c084fc">ตัวเลือก B</strong> (จัดอันดับตามคะแนน/ความสำคัญ)
     </p>
   </div>
 
   <form method="post">
     {% csrf_token %}
 
-    <div class="card p-6 mb-4">
-      <h2 class="font-semibold text-white mb-5">ตั้งค่าการวิเคราะห์</h2>
+    <div class="card p-4 mb-4">
+      <h2 class="fw-semibold text-white mb-4" style="font-size:.95rem">ตั้งค่าการวิเคราะห์</h2>
 
-      <!-- Lottery Type -->
-      <div class="mb-6">
-        <label class="block text-slate-300 text-sm font-medium mb-3">ประเภทหวย</label>
-        <div class="grid grid-cols-3 gap-3">
+      <!-- Lottery Type — Bootstrap btn-check radio cards -->
+      <div class="mb-4">
+        <label class="form-label text-white fw-medium mb-3">ประเภทหวย</label>
+        <div class="d-flex gap-3">
           {% for choice in form.lottery_type %}
-          <label class="relative cursor-pointer">
-            <input type="radio" name="lottery_type"
+          <div class="flex-fill">
+            <input type="radio" class="btn-check"
+                   name="lottery_type"
+                   id="ltype_{{ choice.data.value }}"
                    value="{{ choice.data.value }}"
                    {% if choice.data.selected %}checked{% endif %}
-                   @change="lottery_type = $event.target.value"
-                   class="peer sr-only" />
-            <div class="peer-checked:border-indigo-500 peer-checked:bg-indigo-900/40 peer-checked:text-white
-                        border border-slate-600 rounded-lg p-3 text-center text-slate-400 text-sm
-                        hover:border-slate-500 transition-all">
-              <p class="font-semibold text-xs">{{ choice.data.value }}</p>
-              <p class="text-xs mt-0.5 leading-tight">
-                {% if choice.data.value == '2D' %}เลขท้าย 2 ตัว{% elif choice.data.value == '3F' %}เลขหน้า 3 ตัว{% else %}เลขหลัง 3 ตัว{% endif %}
-              </p>
-            </div>
-          </label>
+                   autocomplete="off">
+            <label class="btn btn-outline-primary w-100 text-center py-3"
+                   for="ltype_{{ choice.data.value }}">
+              <div class="fw-bold">{{ choice.data.value }}</div>
+              <div class="small fw-normal mt-1" style="font-size:.75rem">
+                {% if choice.data.value == '2D' %}เลขท้าย 2 ตัว
+                {% elif choice.data.value == '3F' %}เลขหน้า 3 ตัว
+                {% else %}เลขหลัง 3 ตัว{% endif %}
+              </div>
+            </label>
+          </div>
           {% endfor %}
         </div>
       </div>
 
       <!-- Reference Draw -->
-      <div class="mb-6">
-        <label class="block text-slate-300 text-sm font-medium mb-2">การออกรางวัลอ้างอิง (การออกรางวัลล่าสุดที่จะใช้เป็นฐานสำหรับการวิเคราะห์)</label>
-        <select name="reference_draw_id" class="input-field">
+      <div class="mb-4">
+        <label class="form-label text-white fw-medium">
+          การออกรางวัลอ้างอิง
+          <span class="text-secondary fw-normal small">(งวดล่าสุดที่ใช้เป็นฐาน)</span>
+        </label>
+        <select name="reference_draw_id" class="form-select">
           {% for draw in draws %}
           <option value="{{ draw.pk }}">
-            {{ draw.draw_date|date:"d M Y" }} — {{ draw.first_prize }}
-            (2D: {{ draw.two_back }})
+            {{ draw.draw_date|date:"d M Y" }} — {{ draw.first_prize }} (2D: {{ draw.two_back }})
           </option>
           {% empty %}
-          <option disabled>ยังไม่มีการออกรางวัล — กรุณาเพิ่มการออกรางวัลก่อน</option>
+          <option disabled>ยังไม่มีการออกรางวัล — กรุณาเพิ่มก่อน</option>
           {% endfor %}
         </select>
-        <p class="text-slate-500 text-xs mt-1">การวิเคราะห์จะใช้ข้อมูลการออกรางวัลย้อนหลังตามจำนวนที่กำหนดเพื่อคำนวณผลลัพธ์</p>
+        <div class="form-text text-secondary">การวิเคราะห์จะใช้ข้อมูลย้อนหลังตามจำนวนที่กำหนด</div>
       </div>
 
       <!-- History Limit -->
-      <div class="mb-6">
-        <label class="block text-slate-300 text-sm font-medium mb-2">
-          จำนวนการออกรางวัลย้อนหลังที่จะนำมาวิเคราะห์
-          <span class="text-slate-500 font-normal">(มาก = วิเคราะห์จากข้อมูลย้อนหลังมากขึ้น)</span>
+      <div class="mb-4">
+        <label class="form-label text-white fw-medium">
+          จำนวนงวดย้อนหลัง
+          <span class="text-secondary fw-normal small">(มาก = วิเคราะห์จากข้อมูลย้อนหลังมากขึ้น)</span>
         </label>
-        <div class="flex items-center gap-4">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
           {{ form.history_limit }}
-          <div class="flex gap-2">
-            <button type="button" onclick="this.closest('form').querySelector('[name=history_limit]').value=10"  class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded">10</button>
-            <button type="button" onclick="this.closest('form').querySelector('[name=history_limit]').value=20"  class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded">20</button>
-            <button type="button" onclick="this.closest('form').querySelector('[name=history_limit]').value=50"  class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded">50</button>
-            <button type="button" onclick="this.closest('form').querySelector('[name=history_limit]').value=100" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded">100</button>
-            <button type="button" onclick="this.closest('form').querySelector('[name=history_limit]').value=200" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded">200</button>
+          <!-- Quick preset buttons -->
+          <div class="d-flex gap-2 flex-wrap">
+            {% for n in "10,20,50,100,200" %}{% endfor %}
+            <button type="button" onclick="setLimit(10)"  class="btn btn-outline-secondary btn-sm">10</button>
+            <button type="button" onclick="setLimit(20)"  class="btn btn-outline-secondary btn-sm">20</button>
+            <button type="button" onclick="setLimit(50)"  class="btn btn-outline-secondary btn-sm">50</button>
+            <button type="button" onclick="setLimit(100)" class="btn btn-outline-secondary btn-sm">100</button>
+            <button type="button" onclick="setLimit(200)" class="btn btn-outline-secondary btn-sm">200</button>
           </div>
         </div>
       </div>
 
       <!-- Target Date -->
       <div>
-        <label class="block text-slate-300 text-sm font-medium mb-2">วันการออกรางวัลเป้าหมาย (ไม่บังคับ)</label>
+        <label class="form-label text-white fw-medium">
+          วันการออกรางวัลเป้าหมาย
+          <span class="text-secondary fw-normal small">(ไม่บังคับ)</span>
+        </label>
         {{ form.target_draw_date }}
-        <p class="text-slate-500 text-xs mt-1">ระบุวันที่การออกรางวัลที่คุณต้องการทาย (ไม่บังคับ)</p>
+        <div class="form-text text-secondary">ระบุวันที่การออกรางวัลที่คุณต้องการทาย (ไม่บังคับ)</div>
       </div>
     </div>
 
-    <!-- ข้อมูลสูตร -->
-    <div class="card p-4 mb-6 border-indigo-900">
-      <div class="flex items-start gap-3">
-        <div class="w-8 h-8 bg-indigo-900 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-          <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    <!-- Formula Info -->
+    <div class="card p-4 mb-4 card-accent-indigo">
+      <div class="d-flex align-items-start gap-3">
+        <div class="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0 mt-1"
+             style="width:2rem;height:2rem;background:#312e81">
+          <svg width="16" height="16" style="color:#818cf8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01
+                     M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
         </div>
         <div>
-          <p class="text-white text-sm font-medium">75 สูตร แบ่งเป็น 8 หมวดหมู่</p>
-          <p class="text-slate-400 text-xs mt-0.5">คำนวณ · ความถี่ · ช่วงตัวเลข · ตำแหน่ง · สถิติ · สรุป · การปรับค่า · การเชื่อมโยง</p>
-          <a href="{% url 'formula_settings' %}" class="text-indigo-400 text-xs hover:text-indigo-300 mt-1 inline-block">ตั้งค่าน้ำหนักสูตร →</a>
+          <p class="mb-1 text-white fw-medium small">75 สูตร แบ่งเป็น 8 หมวดหมู่</p>
+          <p class="mb-1 text-secondary fs-xs">คำนวณ · ความถี่ · ช่วงตัวเลข · ตำแหน่ง · สถิติ · สรุป · การปรับค่า · การเชื่อมโยง</p>
+          <a href="{% url 'formula_settings' %}" class="text-primary fs-xs text-decoration-none">ตั้งค่าน้ำหนักสูตร →</a>
         </div>
       </div>
     </div>
 
+    <!-- No draws warning -->
     {% if not draws %}
-    <div class="card p-4 border-amber-900 mb-4">
-      <p class="text-amber-300 text-sm">ยังไม่มีการออกรางวัล กรุณา <a href="{% url 'draw_add' %}" class="underline">เพิ่มการออกรางวัล</a> ก่อน</p>
+    <div class="alert alert-warning">
+      ยังไม่มีการออกรางวัล กรุณา <a href="{% url 'draw_add' %}" class="alert-link">เพิ่มการออกรางวัล</a> ก่อน
     </div>
     {% endif %}
 
-    <div class="flex gap-3">
-      <button type="submit" {% if not draws %}disabled{% endif %}
-              class="btn-primary {% if not draws %}opacity-50 cursor-not-allowed{% endif %}">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    <!-- Submit -->
+    <div class="d-flex gap-3">
+      <button type="submit" class="btn btn-primary d-flex align-items-center gap-2"
+              {% if not draws %}disabled{% endif %}>
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
         วิเคราะห์ตอนนี้
       </button>
-      <a href="{% url 'dashboard' %}" class="btn-secondary">ยกเลิก</a>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">ยกเลิก</a>
     </div>
+
   </form>
 </div>
+
+<script>
+  function setLimit(n) {
+    document.querySelector('[name=history_limit]').value = n;
+  }
+</script>
 {% endblock %}

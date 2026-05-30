@@ -142,6 +142,7 @@ def analysis_run(request):
 
         option_a = engine.aggregate_option_a(formula_results)
         option_b = engine.aggregate_option_b(formula_results)
+        option_c = engine.aggregate_option_c_enhanced(formula_results)
 
         # Persist the session
         session = AnalysisSession.objects.create(
@@ -154,6 +155,7 @@ def analysis_run(request):
             formula_raw_results={k: v[:10] for k, v in formula_results.items()},
             option_a_results=option_a,
             option_b_results=option_b,
+            option_c_results=option_c,
         )
 
         # Save individual prediction entries
@@ -167,6 +169,11 @@ def analysis_run(request):
                 session=session, option='B', rank=rank,
                 number=num_str, ranking_score=float(score),
             )
+        for rank, (num_str, score) in enumerate(option_c, 1):
+            PredictionEntry.objects.create(
+                session=session, option='C', rank=rank,
+                number=num_str, ranking_score=float(score),
+            )
 
         return redirect('analysis_detail', pk=session.pk)
 
@@ -177,6 +184,7 @@ def analysis_detail(request, pk):
     session = get_object_or_404(AnalysisSession, pk=pk)
     predictions_a = session.predictions.filter(option='A').order_by('rank')
     predictions_b = session.predictions.filter(option='B').order_by('rank')
+    predictions_c = session.predictions.filter(option='C').order_by('rank')
 
     # Formula breakdown table (top-5 slice of each formula)
     formula_breakdown = []
@@ -195,6 +203,7 @@ def analysis_detail(request, pk):
         'session': session,
         'predictions_a': predictions_a,
         'predictions_b': predictions_b,
+        'predictions_c': predictions_c,
         'formula_breakdown': formula_breakdown,
     })
 
@@ -270,6 +279,22 @@ def verify_session(request, session_pk):
     for pred in session.predictions.all():
         pred.verify(actual_draw)
 
+    # Self-learning: adjust formula weights based on which formulas predicted correctly
+    actual_number = actual_draw.get_number_for_type(session.lottery_type)
+    if actual_number and session.formula_raw_results:
+        formula_configs = {fc.formula_code: fc for fc in FormulaConfig.objects.all()}
+        to_update = []
+        for code, results in session.formula_raw_results.items():
+            top5_numbers = [r[0] for r in results[:5]]
+            fc = formula_configs.get(code)
+            if fc:
+                if actual_number in top5_numbers:
+                    fc.weight = min(3.0, round(fc.weight + 0.15, 2))
+                else:
+                    fc.weight = max(0.1, round(fc.weight - 0.05, 2))
+                to_update.append(fc)
+        FormulaConfig.objects.bulk_update(to_update, ['weight'])
+
     messages.success(request, f'Session verified against draw {actual_draw.draw_date}.')
     if request.htmx:
         # Return partial — summary row
@@ -313,6 +338,71 @@ def formula_settings(request):
         'groups': groups,
         'total': configs.count(),
         'active': configs.filter(is_active=True).count(),
+    })
+
+
+# ============================================================
+# Combine 3F + 3B → 6-Digit First Prize Candidates
+# ============================================================
+def combine_6d(request):
+    """
+    Cross-join top-N predictions from a 3F session and a 3B session
+    to produce 6-digit first-prize candidates.
+    """
+    sessions_3f = (AnalysisSession.objects
+                   .filter(lottery_type='3F')
+                   .select_related('reference_draw')
+                   .order_by('-created_at')[:30])
+    sessions_3b = (AnalysisSession.objects
+                   .filter(lottery_type='3B')
+                   .select_related('reference_draw')
+                   .order_by('-created_at')[:30])
+
+    front_session_pk = request.POST.get('front_session') or request.GET.get('front_session')
+    back_session_pk  = request.POST.get('back_session')  or request.GET.get('back_session')
+
+    try:
+        top_n = max(1, min(int(request.POST.get('top_n', 5)), 10))
+    except (ValueError, TypeError):
+        top_n = 5
+
+    front_session = back_session = None
+    front_numbers = back_numbers = []
+    combinations  = []
+
+    if front_session_pk:
+        front_session = AnalysisSession.objects.filter(
+            pk=front_session_pk, lottery_type='3F'
+        ).select_related('reference_draw').first()
+
+    if back_session_pk:
+        back_session = AnalysisSession.objects.filter(
+            pk=back_session_pk, lottery_type='3B'
+        ).select_related('reference_draw').first()
+
+    if request.method == 'POST' and front_session and back_session:
+        def _top_numbers(session, n):
+            # Prefer Option C (enhanced consensus), then A
+            for opt in ('C', 'A', 'B'):
+                qs = session.predictions.filter(option=opt).order_by('rank')[:n]
+                if qs.exists():
+                    return [p.number for p in qs]
+            return []
+
+        front_numbers = _top_numbers(front_session, top_n)
+        back_numbers  = _top_numbers(back_session,  top_n)
+        combinations  = [f + b for f in front_numbers for b in back_numbers]
+
+    return render(request, 'analysis/combine_6d.html', {
+        'sessions_3f':    sessions_3f,
+        'sessions_3b':    sessions_3b,
+        'front_session':  front_session,
+        'back_session':   back_session,
+        'front_numbers':  front_numbers,
+        'back_numbers':   back_numbers,
+        'combinations':   combinations,
+        'top_n':          top_n,
+        'total':          len(combinations),
     })
 
 

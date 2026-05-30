@@ -1,0 +1,282 @@
+{% extends "analysis/base.html" %}
+{% block title %}สร้างเลขรางวัลที่ 1 (6 หลัก){% endblock %}
+{% block page_title %}สร้างเลขรางวัลที่ 1 — ผสม 3F + 3B{% endblock %}
+
+{% block content %}
+<div style="max-width:960px">
+
+  <!-- Header Info -->
+  <div class="card p-4 mb-4 card-accent-gold">
+    <div class="d-flex gap-3">
+      <div class="fs-3 flex-shrink-0">🎯</div>
+      <div>
+        <h3 class="fw-semibold text-white mb-1" style="font-size:.95rem">วิธีทำงาน</h3>
+        <p class="text-secondary small mb-0">
+          เลือก Session <span class="badge badge-3f">3F</span> (เลขหน้า 3 ตัว)
+          และ Session <span class="badge badge-3b">3B</span> (เลขหลัง 3 ตัว)
+          ระบบจะจับคู่ให้อัตโนมัติ เช่น หน้า <strong class="text-gold font-mono">123</strong> + หลัง <strong class="text-gold font-mono">456</strong>
+          = <strong class="text-gold font-mono">123456</strong>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Selection Form -->
+  <form method="post" action="{% url 'combine_6d' %}">
+    {% csrf_token %}
+
+    <div class="row g-4 mb-4">
+
+      <!-- 3F Session -->
+      <div class="col-12 col-md-5">
+        <div class="card p-4 h-100">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="badge badge-3f fw-semibold">3F</span>
+            <span class="fw-semibold text-white small">เลือก Session เลขหน้า 3 ตัว</span>
+          </div>
+          <select name="front_session" class="form-select form-select-sm mb-0" required
+                  style="background:var(--app-surface-2);border-color:var(--app-border);color:#fff">
+            <option value="">— เลือก Session 3F —</option>
+            {% for s in sessions_3f %}
+            <option value="{{ s.pk }}"
+              {% if front_session and front_session.pk == s.pk %}selected{% endif %}>
+              {{ s.reference_draw.draw_date|date:"d M Y" }} · {{ s.created_at|date:"d/m H:i" }}
+              · {{ s.history_limit }} งวด
+            </option>
+            {% empty %}
+            <option disabled>— ยังไม่มี Session 3F —</option>
+            {% endfor %}
+          </select>
+          {% if not sessions_3f %}
+          <p class="text-secondary fs-xs mt-2 mb-0">
+            ⚠️ ยังไม่มีผลวิเคราะห์ 3F —
+            <a href="{% url 'analysis_run' %}" class="text-primary">วิเคราะห์ก่อน</a>
+          </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Cross symbol -->
+      <div class="col-12 col-md-2 d-flex align-items-center justify-content-center">
+        <div class="text-center text-secondary">
+          <div style="font-size:2rem;line-height:1">×</div>
+          <div class="fs-xs">ผสม</div>
+        </div>
+      </div>
+
+      <!-- 3B Session -->
+      <div class="col-12 col-md-5">
+        <div class="card p-4 h-100">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="badge badge-3b fw-semibold">3B</span>
+            <span class="fw-semibold text-white small">เลือก Session เลขหลัง 3 ตัว</span>
+          </div>
+          <select name="back_session" class="form-select form-select-sm mb-0" required
+                  style="background:var(--app-surface-2);border-color:var(--app-border);color:#fff">
+            <option value="">— เลือก Session 3B —</option>
+            {% for s in sessions_3b %}
+            <option value="{{ s.pk }}"
+              {% if back_session and back_session.pk == s.pk %}selected{% endif %}>
+              {{ s.reference_draw.draw_date|date:"d M Y" }} · {{ s.created_at|date:"d/m H:i" }}
+              · {{ s.history_limit }} งวด
+            </option>
+            {% empty %}
+            <option disabled>— ยังไม่มี Session 3B —</option>
+            {% endfor %}
+          </select>
+          {% if not sessions_3b %}
+          <p class="text-secondary fs-xs mt-2 mb-0">
+            ⚠️ ยังไม่มีผลวิเคราะห์ 3B —
+            <a href="{% url 'analysis_run' %}" class="text-primary">วิเคราะห์ก่อน</a>
+          </p>
+          {% endif %}
+        </div>
+      </div>
+
+    </div><!-- /row -->
+
+    <!-- top_n + submit -->
+    <div class="card p-4 mb-4">
+      <div class="row align-items-end g-3">
+        <div class="col-12 col-sm-6 col-md-4">
+          <label class="form-label text-secondary small mb-1">
+            ใช้ Top กี่เลขจากแต่ละ Session?
+          </label>
+          <select name="top_n" class="form-select form-select-sm"
+                  style="background:var(--app-surface-2);border-color:var(--app-border);color:#fff">
+            {% for n in "345678" %}
+            <option value="{{ n }}" {% if top_n|stringformat:"s" == n %}selected{% endif %}>
+              Top {{ n }} · ได้ {{ n }}×{{ n }} = {{ n|add:0 }}² เลข
+            </option>
+            {% endfor %}
+            <option value="10" {% if top_n == 10 %}selected{% endif %}>Top 10 · ได้ 100 เลข</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-md-4">
+          <p class="text-secondary fs-xs mb-2">
+            ระบบจะใช้ <strong class="text-white">ตัวเลือก C</strong> ก่อน ถ้าไม่มีจะใช้ A
+          </p>
+          <button type="submit" class="btn btn-primary w-100">
+            🎲 สร้างเลข 6 หลัก
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+
+  {% if combinations %}
+  <!-- Result Stats -->
+  <div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
+    <div class="col">
+      <div class="card p-3 text-center">
+        <p class="mb-1 text-secondary fs-xs">จำนวนเลขทั้งหมด</p>
+        <p class="mb-0 fw-bold text-primary" style="font-size:1.6rem">{{ total }}</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card p-3 text-center">
+        <p class="mb-1 text-secondary fs-xs">เลขหน้า (3F) ที่ใช้</p>
+        <p class="mb-0 fw-semibold text-white">
+          {% for n in front_numbers %}
+          <span class="font-mono badge-3f badge me-1">{{ n }}</span>
+          {% endfor %}
+        </p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card p-3 text-center">
+        <p class="mb-1 text-secondary fs-xs">เลขหลัง (3B) ที่ใช้</p>
+        <p class="mb-0 fw-semibold text-white">
+          {% for n in back_numbers %}
+          <span class="font-mono badge-3b badge me-1">{{ n }}</span>
+          {% endfor %}
+        </p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card p-3 text-center">
+        <p class="mb-1 text-secondary fs-xs">อ้างอิง 3F / 3B</p>
+        <p class="mb-0 text-secondary fs-xs">
+          {{ front_session.reference_draw.draw_date|date:"d M Y" }}<br>
+          {{ back_session.reference_draw.draw_date|date:"d M Y" }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Numbers Grid -->
+  <div class="card overflow-hidden mb-4">
+    <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+      <div>
+        <h3 class="mb-0 fw-semibold text-white" style="font-size:.95rem">
+          🏆 เลขรางวัลที่ 1 ที่แนะนำ ({{ total }} เลข)
+        </h3>
+        <p class="mb-0 text-secondary fs-xs">คลิกที่เลขเพื่อคัดลอก</p>
+      </div>
+      <div class="d-flex gap-2">
+        <button onclick="copyAll()" class="btn btn-primary btn-sm">
+          📋 คัดทั้งหมด
+        </button>
+        <button onclick="downloadCSV()" class="btn btn-outline-secondary btn-sm">
+          ⬇️ CSV
+        </button>
+        <button onclick="printNumbers()" class="btn btn-outline-secondary btn-sm">
+          🖨️ พิมพ์
+        </button>
+      </div>
+    </div>
+
+    <div class="p-4">
+      <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3">
+        {% for combo in combinations %}
+        <div class="col">
+          <div class="card p-3 text-center number-combo-card"
+               onclick="copySingle(this, '{{ combo }}')"
+               title="คลิกเพื่อคัดลอก"
+               style="cursor:pointer;transition:.15s;border-color:var(--app-border)">
+            <div class="font-mono fw-bold text-white" style="font-size:1.15rem;letter-spacing:.08em">
+              <span style="color:#818cf8">{{ combo|slice:":3" }}</span><span style="color:#f0abfc">{{ combo|slice:"3:" }}</span>
+            </div>
+            <div class="fs-xs text-secondary mt-1">
+              {{ combo|slice:":3" }} + {{ combo|slice:"3:" }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {% elif request.method == 'POST' %}
+  <!-- No result -->
+  <div class="card p-4 text-center text-secondary mb-4">
+    ⚠️ ไม่มีข้อมูลทำนายใน Session ที่เลือก กรุณาลองใช้ Session อื่น
+  </div>
+  {% endif %}
+
+  <a href="{% url 'analysis_history' %}" class="btn btn-outline-secondary btn-sm">
+    ← กลับไปประวัติการวิเคราะห์
+  </a>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const numbers = [{% for c in combinations %}'{{ c }}',{% endfor %}];
+
+  function copySingle(el, num) {
+    navigator.clipboard.writeText(num).then(() => {
+      el.style.borderColor = '#10b981';
+      el.style.background  = 'rgba(16,185,129,.15)';
+      setTimeout(() => {
+        el.style.borderColor = '';
+        el.style.background  = '';
+      }, 700);
+    });
+  }
+
+  function copyAll() {
+    navigator.clipboard.writeText(numbers.join('\n')).then(() => {
+      alert('✓ คัดเลขรางวัลที่ 1 จำนวน ' + numbers.length + ' เลข สำเร็จ!');
+    });
+  }
+
+  function downloadCSV() {
+    const blob = new Blob([numbers.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'first-prize-candidates.csv';
+    a.style.visibility = 'hidden';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function printNumbers() {
+    const win = window.open('', '', 'height=700,width=900');
+    win.document.write(`
+      <html><head>
+        <title>เลขรางวัลที่ 1 — {{ total }} เลข</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { text-align: center; font-size: 1.2rem; }
+          p  { text-align: center; color: #555; margin: .25rem 0 1rem; }
+          .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+          .num  { border: 1px solid #333; padding: 10px 6px; text-align: center;
+                  font-weight: bold; font-family: monospace; font-size: .95rem; }
+          .num .f { color: #4f46e5; }
+          .num .b { color: #7c3aed; }
+        </style>
+      </head><body>
+        <h1>เลขรางวัลที่ 1 ที่แนะนำ</h1>
+        <p>3F: {{ front_numbers|join:", " }} &nbsp;×&nbsp; 3B: {{ back_numbers|join:", " }} &nbsp;|&nbsp; รวม ${numbers.length} เลข</p>
+        <div class="grid">${numbers.map(n => `<div class="num"><span class="f">${n.slice(0,3)}</span><span class="b">${n.slice(3)}</span></div>`).join('')}</div>
+      </body></html>
+    `);
+    win.document.close();
+    win.print();
+  }
+</script>
+{% endblock %}

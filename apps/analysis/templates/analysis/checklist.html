@@ -1,129 +1,152 @@
 {% extends "analysis/base.html" %}
-{% block title %}ตรวจสอบการทดลอง{% endblock %}
-{% block page_title %}ตรวจสอบ / เช็คลิส{% endblock %}
+{% block title %}ตรวจสอบการทำนาย{% endblock %}
+{% block page_title %}ตรวจสอบ / เช็คลิสต์{% endblock %}
 
 {% block content %}
-<!-- คำสั่งที่รอการตรวจสอบ -->
-<div class="mb-6">
-  <h2 class="font-semibold text-white mb-3">
-    คำสั่งที่รอการตรวจสอบ
-    <span class="ml-2 badge bg-amber-900 text-amber-300">{{ unverified.count }}</span>
+
+<!-- Unverified Sessions -->
+<div class="mb-5">
+  <h2 class="fw-semibold text-white mb-3 d-flex align-items-center gap-2" style="font-size:.95rem">
+    การวิเคราะห์ที่รอตรวจสอบ
+    <span class="badge badge-warn">{{ unverified.count }}</span>
   </h2>
 
   {% if unverified %}
-  <div class="space-y-3" id="unverified-list">
+  <div class="d-flex flex-column gap-3" id="unverified-list">
     {% for session in unverified %}
-    <div class="card p-4" id="session-verify-{{ session.pk }}"
-         x-data="{ open: false }">
-      <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="card p-4" id="session-verify-{{ session.pk }}">
+
+      <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+
+        <!-- Info -->
         <div>
-          <span class="badge
-            {% if session.lottery_type == '2D' %}bg-indigo-900 text-indigo-300
-            {% elif session.lottery_type == '3F' %}bg-purple-900 text-purple-300
-            {% else %}bg-teal-900 text-teal-300{% endif %}">
+          <span class="badge fw-semibold
+            {% if session.lottery_type == '2D' %}badge-2d
+            {% elif session.lottery_type == '3F' %}badge-3f
+            {% else %}badge-3b{% endif %}">
             {{ session.lottery_type }}
           </span>
-          <span class="text-white text-sm ml-2">Analysis #{{ session.pk }}</span>
-          <p class="text-slate-400 text-xs mt-1">Based on {{ session.reference_draw.draw_date }} · {{ session.created_at|date:"d M Y H:i" }}</p>
+          <span class="text-white small ms-2">Analysis #{{ session.pk }}</span>
+          <p class="mb-0 text-secondary small mt-1">
+            Based on {{ session.reference_draw.draw_date }} · {{ session.created_at|date:"d M Y H:i" }}
+          </p>
 
           <!-- Predicted numbers -->
-          <div class="mt-2 flex flex-wrap gap-2">
-            <span class="text-slate-500 text-xs self-center">A:</span>
+          <div class="d-flex flex-wrap align-items-center gap-1 mt-2">
+            <span class="text-secondary fs-xs me-1">A:</span>
             {% for item in session.option_a_results %}
-            <span class="px-2 py-0.5 bg-indigo-900/50 border border-indigo-800 text-indigo-200 font-mono text-xs rounded">{{ item.0 }}</span>
+            <span class="badge font-mono badge-2d">{{ item.0 }}</span>
             {% endfor %}
-            <span class="text-slate-500 text-xs self-center ml-2">B:</span>
+            <span class="text-secondary fs-xs ms-2 me-1">B:</span>
             {% for item in session.option_b_results %}
-            <span class="px-2 py-0.5 bg-purple-900/50 border border-purple-800 text-purple-200 font-mono text-xs rounded">{{ item.0 }}</span>
+            <span class="badge font-mono badge-3f">{{ item.0 }}</span>
             {% endfor %}
           </div>
         </div>
 
-        <button @click="open = !open"
-                class="btn-primary text-xs py-1 px-3">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <!-- Toggle verify form (Bootstrap collapse) -->
+        <button type="button"
+                class="btn btn-primary btn-sm d-flex align-items-center gap-2"
+                data-bs-toggle="collapse"
+                data-bs-target="#verify-form-{{ session.pk }}">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
           ตรวจสอบตอนนี้
         </button>
+
       </div>
 
-      <!-- ฟอร์มตรวจ (ซ์): -->
-      <div x-show="open" x-cloak class="mt-4 pt-4 border-t border-slate-700">
+      <!-- Verify Form (collapsed by default) -->
+      <div class="collapse mt-4 pt-3 border-top" id="verify-form-{{ session.pk }}"
+           style="border-color: var(--app-border) !important">
         <form hx-post="{% url 'verify_session' session.pk %}"
               hx-target="#session-verify-{{ session.pk }}"
               hx-swap="outerHTML"
               hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
           {% csrf_token %}
-          <label class="block text-slate-300 text-sm mb-2">เลือกผลการออกรางวัลจริง:</label>
-          <select name="actual_draw_id" class="input-field mb-3">
+          <label class="form-label text-white small fw-medium">เลือกผลการออกรางวัลจริง:</label>
+          <select name="actual_draw_id" class="form-select mb-3">
             {% for draw in draws %}
-            <option value="{{ draw.pk }}">{{ draw.draw_date|date:"d M Y" }} — รางที่ 1: {{ draw.first_prize }} | 2D: {{ draw.two_back }}</option>
+            <option value="{{ draw.pk }}">
+              {{ draw.draw_date|date:"d M Y" }} — รางวัลที่ 1: {{ draw.first_prize }} | 2D: {{ draw.two_back }}
+            </option>
             {% endfor %}
           </select>
-          <button type="submit" class="btn-primary text-xs">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <button type="submit" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
             ยืนยันตรวจสอบ
           </button>
         </form>
       </div>
+
     </div>
     {% endfor %}
   </div>
+
   {% else %}
-  <div class="card p-8 text-center text-slate-500 text-sm">
-    ไม่มีการตรวจสอบที่ค้ำคว้องอยู่ หรือให้ทำการวิเคราะห์เพื่อสร้างการทำนายบ้างก่อน
+  <div class="card p-4 text-center text-secondary small">
+    ไม่มีการวิเคราะห์ที่รอตรวจสอบ หรือให้ทำการวิเคราะห์เพื่อสร้างการทำนายก่อน
   </div>
   {% endif %}
 </div>
 
+
 <!-- Verification History -->
 {% if verified %}
 <div>
-  <h2 class="font-semibold text-white mb-3">Recent Verifications</h2>
+  <h2 class="fw-semibold text-white mb-3" style="font-size:.95rem">ประวัติการตรวจสอบ</h2>
   <div class="card overflow-hidden">
-    <table class="w-full text-sm">
-      <thead>
-        <tr class="text-xs text-slate-400 uppercase border-b border-slate-700 text-left">
-          <th class="px-5 py-3">Session</th>
-          <th class="px-5 py-3">Type</th>
-          <th class="px-5 py-3">Predicted</th>
-          <th class="px-5 py-3">Actual</th>
-          <th class="px-5 py-3">Result</th>
-          <th class="px-5 py-3">Verified</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-700/50">
-        {% for pred in verified %}
-        <tr class="hover:bg-slate-700/20 transition-colors">
-          <td class="px-5 py-3 text-slate-300 font-mono">#{{ pred.session.pk }}</td>
-          <td class="px-5 py-3">
-            <span class="badge
-              {% if pred.session.lottery_type == '2D' %}bg-indigo-900 text-indigo-300
-              {% elif pred.session.lottery_type == '3F' %}bg-purple-900 text-purple-300
-              {% else %}bg-teal-900 text-teal-300{% endif %}">
-              Opt {{ pred.option }} · {{ pred.session.lottery_type }}
-            </span>
-          </td>
-          <td class="px-5 py-3 font-mono text-white font-semibold">{{ pred.number }}</td>
-          <td class="px-5 py-3 font-mono text-slate-300">
-            {% if pred.verified_against %}
-              {% if pred.session.lottery_type == '2D' %}{{ pred.verified_against.two_back|default:"—" }}
-              {% elif pred.session.lottery_type == '3F' %}{{ pred.verified_against.three_front_1|default:"—" }}
-              {% else %}{{ pred.verified_against.three_back_1|default:"—" }}{% endif %}
-            {% else %}—{% endif %}
-          </td>
-          <td class="px-5 py-3">
-            {% if pred.was_correct %}
-            <span class="badge bg-green-900 text-green-300">✓ HIT</span>
-            {% else %}
-            <span class="badge bg-red-900 text-red-300">✗ MISS</span>
-            {% endif %}
-          </td>
-          <td class="px-5 py-3 text-slate-400 text-xs">{{ pred.verified_at|date:"d M Y" }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Session</th>
+            <th>ประเภท</th>
+            <th>ทำนาย</th>
+            <th>ผลจริง</th>
+            <th>ผล</th>
+            <th>ตรวจสอบเมื่อ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pred in verified %}
+          <tr>
+            <td class="font-mono text-secondary">#{{ pred.session.pk }}</td>
+            <td>
+              <span class="badge fw-semibold
+                {% if pred.session.lottery_type == '2D' %}badge-2d
+                {% elif pred.session.lottery_type == '3F' %}badge-3f
+                {% else %}badge-3b{% endif %}">
+                Opt {{ pred.option }} · {{ pred.session.lottery_type }}
+              </span>
+            </td>
+            <td class="font-mono text-white fw-semibold">{{ pred.number }}</td>
+            <td class="font-mono text-secondary">
+              {% if pred.verified_against %}
+                {% if pred.session.lottery_type == '2D' %}{{ pred.verified_against.two_back|default:"—" }}
+                {% elif pred.session.lottery_type == '3F' %}{{ pred.verified_against.three_front_1|default:"—" }}
+                {% else %}{{ pred.verified_against.three_back_1|default:"—" }}{% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if pred.was_correct %}
+              <span class="badge badge-hit">✓ HIT</span>
+              {% else %}
+              <span class="badge badge-miss">✗ MISS</span>
+              {% endif %}
+            </td>
+            <td class="text-secondary small">{{ pred.verified_at|date:"d M Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endif %}
+
 {% endblock %}

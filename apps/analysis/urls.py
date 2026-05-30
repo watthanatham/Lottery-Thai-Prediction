@@ -17,6 +17,9 @@ urlpatterns = [
     path('analysis/<int:pk>/generate/<str:number>/<str:option>/', views.generate_six_digits, name='generate_six_digits'),
     path('analysis/', views.analysis_history, name='analysis_history'),
 
+    # Combine 3F + 3B → 6-digit
+    path('combine-6d/', views.combine_6d, name='combine_6d'),
+
     # Checklist
     path('checklist/', views.checklist, name='checklist'),
     path('checklist/verify/<int:session_pk>/', views.verify_session, name='verify_session'),

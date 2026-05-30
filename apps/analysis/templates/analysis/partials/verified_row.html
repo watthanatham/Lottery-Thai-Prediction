@@ -1,19 +1,28 @@
-<!-- Verified row (replaces the session verify block after HTMX submit) -->
-<div class="card p-4 border-green-800" id="session-verify-{{ session.pk }}">
-  <div class="flex items-center gap-3">
-    <div class="w-8 h-8 bg-green-900 rounded-full flex items-center justify-center">
-      <svg class="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+{% comment %}
+  HTMX partial — replaces the session verify block after a successful verify POST.
+  Target: #session-verify-{{ session.pk }}
+{% endcomment %}
+<div class="card p-4" id="session-verify-{{ session.pk }}"
+     style="border-color: #166534 !important">
+  <div class="d-flex align-items-start gap-3">
+    <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+         style="width:2.25rem;height:2.25rem;background:#14532d">
+      <svg width="16" height="16" style="color:#86efac" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
     </div>
     <div>
-      <p class="text-white text-sm font-medium">Analysis #{{ session.pk }} verified against {{ actual_draw.draw_date }}</p>
-      <div class="flex gap-2 mt-1 flex-wrap">
+      <p class="mb-1 text-white small fw-semibold">
+        Analysis #{{ session.pk }} ตรวจสอบกับ {{ actual_draw.draw_date }}
+      </p>
+      <div class="d-flex flex-wrap gap-2 mt-1">
         {% for pred in predictions_a %}
-        <span class="badge {% if pred.was_correct %}bg-green-900 text-green-300{% else %}bg-red-900 text-red-300{% endif %}">
+        <span class="badge {% if pred.was_correct %}badge-hit{% else %}badge-miss{% endif %}">
           A{{ pred.rank }}: {{ pred.number }} {% if pred.was_correct %}✓{% else %}✗{% endif %}
         </span>
         {% endfor %}
         {% for pred in predictions_b %}
-        <span class="badge {% if pred.was_correct %}bg-green-900 text-green-300{% else %}bg-red-900 text-red-300{% endif %}">
+        <span class="badge {% if pred.was_correct %}badge-hit{% else %}badge-miss{% endif %}">
           B{{ pred.rank }}: {{ pred.number }} {% if pred.was_correct %}✓{% else %}✗{% endif %}
         </span>
         {% endfor %}
