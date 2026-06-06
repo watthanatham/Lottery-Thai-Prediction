@@ -86,6 +86,27 @@
         </div>
       </div>
 
+      <!-- Coverage budget -->
+      <div class="mb-4">
+        <label class="form-label text-white fw-medium">
+          จำนวนเลขที่จะเล่น (Coverage)
+          <span class="text-secondary fw-normal small">(เล่นมาก = โอกาสถูกสูงขึ้น)</span>
+        </label>
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          {{ form.coverage_budget }}
+          <div class="d-flex gap-2 flex-wrap">
+            <button type="button" onclick="setBudget(5)"  class="btn btn-outline-secondary btn-sm">5</button>
+            <button type="button" onclick="setBudget(10)" class="btn btn-outline-secondary btn-sm">10</button>
+            <button type="button" onclick="setBudget(20)" class="btn btn-outline-secondary btn-sm">20</button>
+            <button type="button" onclick="setBudget(30)" class="btn btn-outline-secondary btn-sm">30</button>
+          </div>
+        </div>
+        <div class="form-text text-secondary">
+          โอกาสถูกตามจริง ≈ จำนวนเลข ÷ พื้นที่ทั้งหมด (2 ตัว = 100, 3 ตัว = 1000) —
+          เช่น เล่น 10 เลข 2 ตัวล่าง ≈ 10% · ไม่มีสูตรใดทำให้แม่นเกินค่านี้
+        </div>
+      </div>
+
       <!-- Target Date -->
       <div>
         <label class="form-label text-white fw-medium">
@@ -141,6 +162,9 @@
 <script>
   function setLimit(n) {
     document.querySelector('[name=history_limit]').value = n;
+  }
+  function setBudget(n) {
+    document.querySelector('[name=coverage_budget]').value = n;
   }
 </script>
 {% endblock %}

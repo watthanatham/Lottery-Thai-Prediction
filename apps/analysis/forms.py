@@ -59,6 +59,12 @@ class AnalysisRunForm(forms.Form):
         label='Draws to include in analysis',
         widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:6rem'}),
     )
+    coverage_budget = forms.IntegerField(
+        min_value=1, max_value=100, initial=10,
+        label='จำนวนเลขที่จะเล่น (coverage)',
+        help_text='ยิ่งเล่นเยอะ โอกาสถูกยิ่งสูง (โอกาสถูก ≈ จำนวนเลข ÷ พื้นที่ทั้งหมด)',
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:6rem'}),
+    )
     target_draw_date = forms.DateField(
         required=False,
         label='Target Draw Date (optional)',

@@ -1011,3 +1011,55 @@ class FormulaEngine:
                                  key=lambda x: (-scores[x], -formula_votes[x]))
         ]
         return results[:top_n]
+
+    @staticmethod
+    def aggregate_coverage(formula_results: Dict[str, Result],
+                           top_n: int = 10,
+                           num_digits: int = 2) -> list:
+        """
+        Option D — Coverage.
+
+        Honest strategy for a fair (random) draw: instead of pretending one number
+        is "the answer", spread the budget across `top_n` DISTINCT numbers so the
+        chance that one of them hits is maximised. Expected hit-rate is exactly
+        top_n / 10**num_digits — and the backtest confirms the formulas cannot beat
+        that, so the only real lever is how many numbers you choose to cover.
+
+        Numbers are ranked by cross-formula consensus (so the set is not arbitrary),
+        then the list is PADDED with the next unused numbers to guarantee the set
+        always contains exactly `top_n` distinct picks — never wasting a slot on a
+        duplicate the way a naive vote count can.
+
+        Returns [(number_str, consensus_score), ...] of length `top_n`.
+        """
+        space = 10 ** num_digits
+        top_n = max(1, min(top_n, space))
+
+        scores: Dict[str, float] = defaultdict(float)
+        votes: Dict[str, int] = defaultdict(int)
+        for results in formula_results.values():
+            for rank_idx, (num_str, _) in enumerate(results[:10]):
+                scores[num_str] += max(0, 10 - rank_idx)
+                votes[num_str] += 1
+
+        ranked = sorted(scores.keys(), key=lambda x: (-scores[x], -votes[x]))
+        picks = ranked[:top_n]
+
+        # Pad to exactly top_n distinct numbers so coverage is guaranteed.
+        if len(picks) < top_n:
+            chosen = set(picks)
+            for i in range(space):
+                s = str(i).zfill(num_digits)
+                if s not in chosen:
+                    picks.append(s)
+                    chosen.add(s)
+                    if len(picks) >= top_n:
+                        break
+
+        return [(p, scores.get(p, 0.0)) for p in picks[:top_n]]
+
+    @staticmethod
+    def coverage_expectation(top_n: int, num_digits: int) -> float:
+        """Honest expected hit-rate (%) for covering `top_n` of 10**num_digits numbers."""
+        space = 10 ** num_digits
+        return min(top_n, space) / space * 100.0

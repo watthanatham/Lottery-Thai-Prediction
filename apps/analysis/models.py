@@ -60,7 +60,11 @@ class LotteryDraw(models.Model):
             if not self.near_first_2:
                 self.near_first_2 = str(int(fp) + 1).zfill(6)
         if not self.draw_label:
-            self.draw_label = self.draw_date.strftime('%-d %b %Y') if self.draw_date else ''
+            # Build "1 Jan 2025" without the glibc-only %-d directive (invalid on Windows).
+            self.draw_label = (
+                f"{self.draw_date.day} {self.draw_date.strftime('%b %Y')}"
+                if self.draw_date else ''
+            )
         super().save(*args, **kwargs)
 
     def get_number_for_type(self, lottery_type: str) -> str | None:

@@ -100,6 +100,7 @@ def analysis_run(request):
         lottery_type = form.cleaned_data['lottery_type']
         history_limit = form.cleaned_data['history_limit']
         target_date = form.cleaned_data.get('target_draw_date')
+        coverage_budget = form.cleaned_data.get('coverage_budget') or 10
 
         # The reference draw is the latest one (or any they pick)
         reference_draw_id = request.POST.get('reference_draw_id')
@@ -137,12 +138,15 @@ def analysis_run(request):
 
         # Run the engine
         num_digits = 2 if lottery_type == '2D' else 3
+        space = 10 ** num_digits
+        top_n = max(1, min(coverage_budget, space))
         engine = FormulaEngine(numbers=numbers, dates=dates, num_digits=num_digits)
         formula_results = engine.run_all(active_codes=active_codes, weights=weights)
 
-        option_a = engine.aggregate_option_a(formula_results)
-        option_b = engine.aggregate_option_b(formula_results)
-        option_c = engine.aggregate_option_c_enhanced(formula_results)
+        option_a = engine.aggregate_option_a(formula_results, top_n)
+        option_b = engine.aggregate_option_b(formula_results, top_n)
+        # Option C is now the honest coverage set sized to the chosen budget.
+        option_c = engine.aggregate_coverage(formula_results, top_n, num_digits)
 
         # Persist the session
         session = AnalysisSession.objects.create(
@@ -199,12 +203,21 @@ def analysis_detail(request, pk):
         })
     formula_breakdown.sort(key=lambda x: x['code'])
 
+    # Honest expectation: covering N numbers out of the whole space.
+    num_digits = 2 if session.lottery_type == '2D' else 3
+    space = 10 ** num_digits
+    covered = predictions_c.count() or predictions_a.count()
+    coverage_pct = round(covered / space * 100, 2) if covered else 0
+
     return render(request, 'analysis/analysis_detail.html', {
         'session': session,
         'predictions_a': predictions_a,
         'predictions_b': predictions_b,
         'predictions_c': predictions_c,
         'formula_breakdown': formula_breakdown,
+        'coverage_count': covered,
+        'coverage_space': space,
+        'coverage_pct': coverage_pct,
     })
 
 

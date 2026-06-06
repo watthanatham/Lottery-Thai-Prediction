@@ -41,8 +41,13 @@
     <div>
       <h3 class="fw-semibold text-white mb-2" style="font-size:.95rem">วิธีเลือกเลขเล่น</h3>
       <p class="text-secondary small mb-2">
-        เลือก <strong class="text-white">Top 3-5 เลขแรก</strong> จากตัวเลือก A หรือ B
-        ที่เหมือนกัน (เลขที่ปรากฏในทั้งสองตัวเลือก) จะมีความมั่นใจสูงสุด
+        หวยรัฐบาลเป็นการ<strong class="text-white">จับฉลากแบบสุ่ม</strong> — ไม่มีสูตรใดทำนายได้แม่นกว่าการสุ่ม
+        (ทดสอบย้อนหลังแล้ว ทุกสูตรได้ผลเท่าการสุ่ม) ตัวช่วยจริงมีอย่างเดียวคือ
+        <strong class="text-white">เล่นหลายเลข (coverage)</strong> เพื่อเพิ่มโอกาสถูกตามจำนวนที่เล่น
+      </p>
+      <p class="text-secondary fs-xs mb-2">
+        ตัวเลือก C คือชุดเลขที่ครอบคลุมตามงบที่ตั้งไว้ · โอกาสถูก ≈ {{ coverage_pct }}%
+        ({{ coverage_count }}/{{ coverage_space }}) · อยากได้โอกาสสูงขึ้นให้เพิ่มจำนวนเลขตอนวิเคราะห์
       </p>
       <div class="d-flex gap-3">
         <a href="{% url 'checklist' %}" class="text-primary fs-xs text-decoration-none">✅ ตรวจสอบผล</a>
@@ -52,7 +57,7 @@
 </div>
 
 
-<!-- Option C — Enhanced Consensus (ใหม่) -->
+<!-- Option C — Coverage (honest) -->
 {% if predictions_c %}
 <div class="card overflow-hidden mb-4">
   <div class="card-header d-flex align-items-center gap-3 py-3 px-4"
@@ -61,13 +66,14 @@
          style="width:2rem;height:2rem;background:#059669">C</div>
     <div class="flex-grow-1">
       <p class="mb-0 fw-semibold text-white small">
-        ⭐ ตัวเลือก C — Enhanced Consensus (แนะนำ)
+        ⭐ ตัวเลือก C — Coverage (ครอบคลุม {{ coverage_count }} เลข)
       </p>
       <p class="mb-0 fs-xs" style="color:#6ee7b7">
-        ถ่วงน้ำหนัก Gap Analysis 3× · Hot/Cold 2× · Statistical 1.5× · ครอบคลุมมากที่สุด
+        เล่นครบ {{ coverage_count }} เลข = โอกาสถูกตามจริง ≈ <strong>{{ coverage_pct }}%</strong>
+        (จาก {{ coverage_space }} เลขทั้งหมด) · เพิ่มเลข = โอกาสสูงขึ้น
       </p>
     </div>
-    <span class="badge" style="background:#065f46;color:#6ee7b7;font-size:.7rem">แม่นยำสูงสุด</span>
+    <span class="badge" style="background:#065f46;color:#6ee7b7;font-size:.7rem">≈ {{ coverage_pct }}%</span>
   </div>
 
   <div class="card-body p-4">
